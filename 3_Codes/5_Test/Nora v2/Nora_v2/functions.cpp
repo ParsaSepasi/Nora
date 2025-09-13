@@ -80,6 +80,25 @@ void parseRGBCommand(String rgbString) {
   }
 }
 
+// ------------------- CRC-8 -------------------
+byte CalculatSrc8() {
+  byte crc = 0;  // مقدار اولیه CRC
+  String dataWithoutCRC = inputString.substring(0, inputString.length() - 1);  // بدون بایت آخر (CRC)
+  
+  for (int i = 0; i < dataWithoutCRC.length(); i++) {
+    byte currentByte = (byte)dataWithoutCRC[i];
+    crc ^= currentByte;  // XOR اولیه
+    for (int j = 0; j < 8; j++) {  // برای هر بیت
+      if (crc & 0x80) {
+        crc = (crc << 1) ^ 0x07;  // پلی‌نومیال CRC-8 (x^8 + x^2 + x + 1)
+      } else {
+        crc <<= 1;
+      }
+    }
+  }
+  return crc;
+}
+
 // ------------------- EQ -------------------
 void runEqualizer1() {
   Serial.println("runEqualizer1");

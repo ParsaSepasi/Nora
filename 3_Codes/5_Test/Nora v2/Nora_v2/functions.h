@@ -17,3 +17,5 @@ void open_box();
 void close_box();
 
 void run_led_wake_word();
+
+byte CalculatSrc8();  // محاسبه CRC-8

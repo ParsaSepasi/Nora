@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <FastLED.h>
+#define HEADER_NORA "NORA_"
+#define HEADER_LENGTH 5
 
 // LED آرایه
 extern CRGB leds[NUM_LEDS];
@@ -38,3 +40,10 @@ extern uint8_t colorIndex;
 // پین‌ها
 extern const int GPIOPins[NUM_PINS];
 extern const String GPIONames[NUM_PINS];
+
+// متغیرهای پردازش سریال
+//extern String inputString;
+//extern bool stringComplete;
+extern bool stringStart;  // شروع بسته معتبر
+extern String inputdata;  // داده‌های نهایی پس از اعتبارسنجی
+extern bool inputdataComplete;  // داده‌های آماده پردازش
