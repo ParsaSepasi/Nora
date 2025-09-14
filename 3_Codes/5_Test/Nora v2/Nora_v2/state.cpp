@@ -3,9 +3,8 @@
 
 CRGB leds[NUM_LEDS];
 
-//String inputString = "";
+String inputString = "";
 int customBrightness = 100;
-//bool stringComplete = false;
 
 bool equalizer1Active = false;
 bool equalizer2Active = false;
@@ -37,8 +36,9 @@ const int GPIOPins[NUM_PINS] = {BACKLIGHT, READINGLIGHT, PARTY, MUTE, OPEN_BOX, 
 const String GPIONames[NUM_PINS] = {"BACKLIGHT", "READINGLIGHT", "PARTY", "MUTE", "OPEN_BOX", "CLOSE_BOX"};
 
 // متغیرهای پردازش سریال
-String inputString = "";
-bool stringComplete = false;
 bool stringStart = false;
 String inputdata = "";
 bool inputdataComplete = false;
+
+// default clock
+String currentTime = "00:00:00";

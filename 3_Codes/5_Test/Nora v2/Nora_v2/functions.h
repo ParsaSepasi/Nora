@@ -1,3 +1,6 @@
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
+
 #pragma once
 #include <Arduino.h>
 
@@ -9,6 +12,10 @@ void runEqualizer1();
 void runEqualizer2();
 void runEqualizer3();
 
+void runBOXEqualizer1();
+void runBOXEqualizer2();
+void runBOXEqualizer3();
+
 void sound_system_off();
 void normal_mode();
 void party_mode();
@@ -18,4 +25,4 @@ void close_box();
 
 void run_led_wake_word();
 
-byte CalculatSrc8();  // محاسبه CRC-8
+#endif

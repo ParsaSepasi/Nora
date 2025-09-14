@@ -7,9 +7,9 @@ void setup() {
   Serial.begin(115200);
   for (int i = 0; i < NUM_PINS; i++) {
     pinMode(GPIOPins[i], OUTPUT);
-    digitalWrite(GPIOPins[i], false);
+    digitalWrite(GPIOPins[i], LOW);
   }
-  inputString.reserve(100);
+  inputString.reserve(100);  // Reserve memory for inputString
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.setBrightness(customBrightness);
   FastLED.clear(true);
@@ -20,25 +20,33 @@ void setup() {
 }
 
 void loop() {
-  serialEvent();
+  serialEvent();  // Manual call for ESP32
+
   if (inputdataComplete) {
     String command = inputdata;
-    command.trim();
-    Serial.print("Processing command: "); Serial.println(command);  // دیباگ
+    //command.trim();
+    #if DEBUG_SERIAL
+      Serial.print(F("Processing command: "));
+      Serial.println(command);
+    #endif
     handleSerialCommand(command);
     inputdata = "";
     inputdataComplete = false;
   } else if (Serial.available()) {
     char c = Serial.read();
-    if (c == 'R') {
+    #if DEBUG_SERIAL
+      Serial.print(F("Received char: "));
+      Serial.println(c);
+    #endif
+    /*if (c == 'R') {
       open_box();
       close_box();
-    }
+    }*/
   } else if (relayActive && millis() - relayOnTime >= 8000) {
-    digitalWrite(OPEN_BOX, false);
-    digitalWrite(CLOSE_BOX, false);
+    digitalWrite(OPEN_BOX, LOW);
+    digitalWrite(CLOSE_BOX, LOW);
     relayActive = false;
-    Serial.println("Relay auto off after 8s");
+    Serial.println(F("Relay auto off after 8s"));
   } else if (equalizer1Active) {
     runEqualizer1();
   } else if (equalizer2Active) {
@@ -48,56 +56,187 @@ void loop() {
   }
 }
 
-// void serialEvent(){
-//   while (Serial.available()){
-//     char inChar = (char)Serial.read();
+// void serialEvent() {
+//   while (Serial.available()) {
+//     char inChar = Serial.read();
+//     inputString += inChar;
 
-//     if(inChar >= 32 && inChar<=126){
-//       inputString += inChar;
-//     } else if (inChar =='\n' || inChar == '\r'){
-//       stringComplete = true;
+//     #if DEBUG_SERIAL
+//       Serial.print(F("Received char: '"));
+//       Serial.print(inChar);
+//       Serial.println(F("'"));
+//     #endif
+
+//     if (inputString.length() < HEADER_LENGTH) {
+//       continue;  // Header incomplete, wait for more
+//     }
+
+//     String header = inputString.substring(0, HEADER_LENGTH);
+//     if (header == HEADER_NORA) {
+//       #if DEBUG_SERIAL
+//         Serial.println(F("Valid header 'NORA ' detected!"));
+//       #endif
+
+//       inputdata = inputString.substring(HEADER_LENGTH);
+//       inputdata.trim();
+
+//       if (inputString.endsWith("\n") || inputString.endsWith("\r")) {
+//         #if DEBUG_SERIAL
+//           Serial.print(F("Valid data after NORA: '"));
+//           Serial.print(inputdata);
+//           Serial.println(F("'"));
+//         #endif
+//         inputdataComplete = true;
+//         inputString = "";
+//         // while (Serial.available()) {
+//         //   Serial.read();
+//       }else {
+//         #if DEBUG_SERIAL
+//           Serial.println(F("Waiting for end of line (\\n or \\r)..."));
+//         #endif
+//       }
+//     } else {
+//       // Split the print to avoid F() + String concatenation
+//       Serial.print(F("Not valid header! Expected 'NORA ', got: '"));
+//       Serial.print(header);
+//       Serial.println(F("'"));
+//       inputString = "";
+//       /*while (Serial.available()) {
+//         char discarded = Serial.read();
+//       }*/
+//     }
+
+//     // Prevent buffer overflow
+//     if (inputString.length() > 30) {
+//       #if DEBUG_SERIAL
+//         Serial.println(F("Input buffer overflow - clearing!"));
+//       #endif
+//       inputString = "";
+//       while (Serial.available()) {
+//         Serial.read();
+//       }
 //     }
 //   }
 // }
 
-
 void serialEvent() {
+  static const char header[] = "NORA ";  // Expected header with space
+  static const int HEADER_LENGTH = 5;    // Length of "NORA "
+  static int headerIndex = 0;            // Tracks current position in header
+
   while (Serial.available()) {
     char inChar = Serial.read();
-    inputString += inChar;
-    Serial.print("Received char: '"); Serial.print(inChar); Serial.println("'");  // دیباگ هر کاراکتر
+    #if DEBUG_SERIAL
+      Serial.print(F("Received char: '"));
+      Serial.print(inChar);
+      Serial.println(F("'"));
+    #endif
 
-    // اگر طول inputString کمتر از 4 باشه، منتظر بمون (هدر ناقصه)
-    if (inputString.length() < HEADER_LENGTH) {
-      continue;
-    }
+    // Convert input character to uppercase for case-insensitive comparison (except for space)
+    char inCharUpper = (headerIndex < 4) ? toupper(inChar) : inChar;
 
-    // چک کردن هدر "NORA" (4 بایت اول)
-    String header = inputString.substring(0, HEADER_LENGTH);
-    if (header == HEADER_NORA) {
-      Serial.println("Valid header 'NORA' detected!");  // دیباگ
+    // Check if current character matches expected header character
+    if (headerIndex < HEADER_LENGTH && inCharUpper == header[headerIndex]) {
+      inputString += inChar;
+      headerIndex++;
+      #if DEBUG_SERIAL
+        Serial.print(F("Header match at position "));
+        Serial.print(headerIndex);
+        Serial.print(F(": '"));
+        Serial.print(inChar);
+        Serial.println(F("'"));
+      #endif
 
-      // استخراج داده‌ها (از بایت 5 تا انتها، تا \n یا \r)
-      inputdata = inputString.substring(HEADER_LENGTH);  // از بعد از هدر
-      inputdata.trim();  // حذف فضاهای اضافی
+      // If full header is matched
+      if (headerIndex == HEADER_LENGTH) {
+        #if DEBUG_SERIAL
+          Serial.println(F("Valid header 'NORA ' detected!"));
+        #endif
 
-      // چک کردن پایان داده با \n یا \r
-      if (inputString.endsWith("\n") || inputString.endsWith("\r")) {
-        Serial.print("Valid data after NORA: '"); Serial.print(inputdata); Serial.println("'");  // دیباگ
-        inputdataComplete = true;
-        inputString = "";  // خالی کردن بافر
-      } else {
-        Serial.println("Waiting for end of line (\n or \r)...");  // دیباگ
+        // Extract data after header
+        inputdata = inputString.substring(HEADER_LENGTH);
+        inputdata.trim();
+
+        // Check for end of command
+        if (inChar == '\n' || inChar == '\r' || inputString.endsWith("\n") || inputString.endsWith("\r")) {
+          #if DEBUG_SERIAL
+            Serial.print(F("Valid data after NORA: '"));
+            Serial.print(inputdata);
+            Serial.println(F("'"));
+          #endif
+          inputdataComplete = true;
+          inputString = "";
+          headerIndex = 0;  // Reset for next command
+        } else {
+          #if DEBUG_SERIAL
+            Serial.println(F("Waiting for end of line (\\n or \\r)..."));
+          #endif
+        }
       }
+    } else if (headerIndex < HEADER_LENGTH) {
+      // Invalid header character: reset and flush Serial buffer
+      #if DEBUG_SERIAL
+        Serial.print(F("Invalid header character at position "));
+        Serial.print(headerIndex + 1);
+        Serial.print(F(": expected '"));
+        Serial.print(header[headerIndex]);
+        Serial.print(F("', got '"));
+        Serial.print(inChar);
+        Serial.println(F("'"));
+      #endif
+      inputString = "";
+      headerIndex = 0;
+      while (Serial.available()) {
+        char discarded = Serial.read();
+        #if DEBUG_SERIAL
+          Serial.print(F("Discarded char: '"));
+          Serial.print(discarded);
+          Serial.println(F("'"));
+        #endif
+      }
+      #if DEBUG_SERIAL
+        Serial.println(F("Serial buffer flushed due to invalid header"));
+      #endif
+      return;  // Exit to avoid processing more characters
     } else {
-      Serial.println("Not valid header! Expected 'NORA', got: '" + header + "'");  // پیام خطا
-      inputString = "";  // خالی کردن بافر
+      // After header, collect data until newline
+      inputString += inChar;
+      if (inChar == '\n' || inChar == '\r') {
+        inputdata = inputString.substring(HEADER_LENGTH);
+        inputdata.trim();
+        #if DEBUG_SERIAL
+          Serial.print(F("Valid data after NORA: '"));
+          Serial.print(inputdata);
+          Serial.println(F("'"));
+        #endif
+        inputdataComplete = true;
+        inputString = "";
+        headerIndex = 0;  // Reset for next command
+      } else {
+        #if DEBUG_SERIAL
+          Serial.println(F("Waiting for end of line (\\n or \\r)..."));
+        #endif
+      }
     }
 
-    // جلوگیری از سرریز بافر (اختیاری، برای ایمنی)
+    // Prevent buffer overflow
     if (inputString.length() > 100) {
-      Serial.println("Input buffer overflow - clearing!");
+      #if DEBUG_SERIAL
+        Serial.println(F("Input buffer overflow - clearing!"));
+      #endif
       inputString = "";
+      headerIndex = 0;
+      while (Serial.available()) {
+        char discarded = Serial.read();
+        #if DEBUG_SERIAL
+          Serial.print(F("Discarded char: '"));
+          Serial.print(discarded);
+          Serial.println(F("'"));
+        #endif
+      }
+      #if DEBUG_SERIAL
+        Serial.println(F("Serial buffer flushed due to overflow"));
+      #endif
     }
   }
 }

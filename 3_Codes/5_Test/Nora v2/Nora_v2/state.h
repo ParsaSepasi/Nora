@@ -1,15 +1,17 @@
 #pragma once
 #include <Arduino.h>
 #include <FastLED.h>
-#define HEADER_NORA "NORA_"
-#define HEADER_LENGTH 5
+
+//#define HEADER_NORA "NORA"
+//#define HEADER_LENGTH 4
+
+#define DEBUG_SERIAL 1
 
 // LED آرایه
 extern CRGB leds[NUM_LEDS];
 
 extern String inputString;
 extern int customBrightness;
-extern bool stringComplete;
 
 extern bool equalizer1Active;
 extern bool equalizer2Active;
@@ -42,8 +44,9 @@ extern const int GPIOPins[NUM_PINS];
 extern const String GPIONames[NUM_PINS];
 
 // متغیرهای پردازش سریال
-//extern String inputString;
-//extern bool stringComplete;
-extern bool stringStart;  // شروع بسته معتبر
-extern String inputdata;  // داده‌های نهایی پس از اعتبارسنجی
-extern bool inputdataComplete;  // داده‌های آماده پردازش
+extern bool stringStart;
+extern String inputdata;
+extern bool inputdataComplete;
+
+// clock
+extern String currentTime;
