@@ -1,10 +1,9 @@
 #pragma once
 #include <Arduino.h>
 
-// تعداد پین‌ها
 #define NUM_PINS     6
-#define BACKLIGHT    16
-#define READINGLIGHT 17
+#define BACKLIGHT    5
+#define READINGLIGHT 2
 #define OPEN_BOX     19
 #define CLOSE_BOX    21
 #define MUTE         22

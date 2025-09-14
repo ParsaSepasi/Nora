@@ -20,28 +20,23 @@ void setup() {
 }
 
 void loop() {
-  serialEvent();  // Manual call for ESP32
+  serialEvent();  // Manual call for ESP32 (not serialEventRun)
 
   if (inputdataComplete) {
-    String command = inputdata;
-    //command.trim();
-    #if DEBUG_SERIAL
-      Serial.print(F("Processing command: "));
-      Serial.println(command);
-    #endif
-    handleSerialCommand(command);
-    inputdata = "";
+    handleSerialCommand(inputdata);
+    if (ledMode == "equalize" && equalizer1Active) {
+      runEqualizer1();  // Assume this exists
+    } else if (ledMode != "off") {
+      if (ledMode == "rainbow") {
+        currentPalette = RainbowColors_p;
+      } else if (ledMode == "static") {
+        CRGB color = hexToCRGB(ledColor);
+        fill_solid(leds, NUM_LEDS, color);
+      }
+      FastLED.setBrightness(brightnessLevel * 85 + 50);
+      FastLED.show();
+    }
     inputdataComplete = false;
-  } else if (Serial.available()) {
-    char c = Serial.read();
-    #if DEBUG_SERIAL
-      Serial.print(F("Received char: "));
-      Serial.println(c);
-    #endif
-    /*if (c == 'R') {
-      open_box();
-      close_box();
-    }*/
   } else if (relayActive && millis() - relayOnTime >= 8000) {
     digitalWrite(OPEN_BOX, LOW);
     digitalWrite(CLOSE_BOX, LOW);
@@ -56,73 +51,12 @@ void loop() {
   }
 }
 
-// void serialEvent() {
-//   while (Serial.available()) {
-//     char inChar = Serial.read();
-//     inputString += inChar;
-
-//     #if DEBUG_SERIAL
-//       Serial.print(F("Received char: '"));
-//       Serial.print(inChar);
-//       Serial.println(F("'"));
-//     #endif
-
-//     if (inputString.length() < HEADER_LENGTH) {
-//       continue;  // Header incomplete, wait for more
-//     }
-
-//     String header = inputString.substring(0, HEADER_LENGTH);
-//     if (header == HEADER_NORA) {
-//       #if DEBUG_SERIAL
-//         Serial.println(F("Valid header 'NORA ' detected!"));
-//       #endif
-
-//       inputdata = inputString.substring(HEADER_LENGTH);
-//       inputdata.trim();
-
-//       if (inputString.endsWith("\n") || inputString.endsWith("\r")) {
-//         #if DEBUG_SERIAL
-//           Serial.print(F("Valid data after NORA: '"));
-//           Serial.print(inputdata);
-//           Serial.println(F("'"));
-//         #endif
-//         inputdataComplete = true;
-//         inputString = "";
-//         // while (Serial.available()) {
-//         //   Serial.read();
-//       }else {
-//         #if DEBUG_SERIAL
-//           Serial.println(F("Waiting for end of line (\\n or \\r)..."));
-//         #endif
-//       }
-//     } else {
-//       // Split the print to avoid F() + String concatenation
-//       Serial.print(F("Not valid header! Expected 'NORA ', got: '"));
-//       Serial.print(header);
-//       Serial.println(F("'"));
-//       inputString = "";
-//       /*while (Serial.available()) {
-//         char discarded = Serial.read();
-//       }*/
-//     }
-
-//     // Prevent buffer overflow
-//     if (inputString.length() > 30) {
-//       #if DEBUG_SERIAL
-//         Serial.println(F("Input buffer overflow - clearing!"));
-//       #endif
-//       inputString = "";
-//       while (Serial.available()) {
-//         Serial.read();
-//       }
-//     }
-//   }
-// }
 
 void serialEvent() {
-  static const char header[] = "NORA ";  // Expected header with space
+  static const char header[] = "NORA_";  // Expected header with space
   static const int HEADER_LENGTH = 5;    // Length of "NORA "
   static int headerIndex = 0;            // Tracks current position in header
+  static bool headerComplete = false;    // Tracks if header is fully matched
 
   while (Serial.available()) {
     char inChar = Serial.read();
@@ -132,75 +66,70 @@ void serialEvent() {
       Serial.println(F("'"));
     #endif
 
-    // Convert input character to uppercase for case-insensitive comparison (except for space)
-    char inCharUpper = (headerIndex < 4) ? toupper(inChar) : inChar;
+    // If header is not yet complete, check for header characters
+    if (!headerComplete) {
+      // Convert input character to uppercase for case-insensitive comparison (except for space)
+      char inCharUpper = (headerIndex < 4) ? toupper(inChar) : inChar;
 
-    // Check if current character matches expected header character
-    if (headerIndex < HEADER_LENGTH && inCharUpper == header[headerIndex]) {
-      inputString += inChar;
-      headerIndex++;
-      #if DEBUG_SERIAL
-        Serial.print(F("Header match at position "));
-        Serial.print(headerIndex);
-        Serial.print(F(": '"));
-        Serial.print(inChar);
-        Serial.println(F("'"));
-      #endif
-
-      // If full header is matched
-      if (headerIndex == HEADER_LENGTH) {
+      // Check if current character matches expected header character
+      if (headerIndex < HEADER_LENGTH && inCharUpper == header[headerIndex]) {
+        inputString += inChar;
+        headerIndex++;
         #if DEBUG_SERIAL
-          Serial.println(F("Valid header 'NORA ' detected!"));
+          Serial.print(F("Header match at position "));
+          Serial.print(headerIndex);
+          Serial.print(F(": '"));
+          Serial.print(inChar);
+          Serial.println(F("'"));
         #endif
 
-        // Extract data after header
-        inputdata = inputString.substring(HEADER_LENGTH);
-        inputdata.trim();
-
-        // Check for end of command
-        if (inChar == '\n' || inChar == '\r' || inputString.endsWith("\n") || inputString.endsWith("\r")) {
+        // If full header is matched
+        if (headerIndex == HEADER_LENGTH) {
           #if DEBUG_SERIAL
-            Serial.print(F("Valid data after NORA: '"));
-            Serial.print(inputdata);
+            Serial.println(F("Valid header 'NORA ' detected!"));
+          #endif
+          headerComplete = true; // Start collecting data
+        }
+      } else {
+        // If header matching fails, reset but check for a new 'N'
+        if (headerIndex > 0) {
+          #if DEBUG_SERIAL
+            Serial.print(F("Invalid header character at position "));
+            Serial.print(headerIndex + 1);
+            Serial.print(F(": expected '"));
+            Serial.print(header[headerIndex]);
+            Serial.print(F("', got '"));
+            Serial.print(inChar);
             Serial.println(F("'"));
           #endif
-          inputdataComplete = true;
-          inputString = "";
-          headerIndex = 0;  // Reset for next command
-        } else {
+          // Slide back to check for a new 'N'
+          if (toupper(inChar) == 'N') {
+            inputString = "N";
+            headerIndex = 1;
+          } else {
+            inputString = "";
+            headerIndex = 0;
+          }
+        } else if (toupper(inChar) == 'N') {
+          // Start of a potential new header
+          inputString = "N";
+          headerIndex = 1;
           #if DEBUG_SERIAL
-            Serial.println(F("Waiting for end of line (\\n or \\r)..."));
+            Serial.println(F("Potential new header started with 'N'"));
+          #endif
+        } else {
+          // Ignore non-'N' characters when not matching header
+          #if DEBUG_SERIAL
+            Serial.print(F("Ignoring non-header char: '"));
+            Serial.print(inChar);
+            Serial.println(F("'"));
           #endif
         }
       }
-    } else if (headerIndex < HEADER_LENGTH) {
-      // Invalid header character: reset and flush Serial buffer
-      #if DEBUG_SERIAL
-        Serial.print(F("Invalid header character at position "));
-        Serial.print(headerIndex + 1);
-        Serial.print(F(": expected '"));
-        Serial.print(header[headerIndex]);
-        Serial.print(F("', got '"));
-        Serial.print(inChar);
-        Serial.println(F("'"));
-      #endif
-      inputString = "";
-      headerIndex = 0;
-      while (Serial.available()) {
-        char discarded = Serial.read();
-        #if DEBUG_SERIAL
-          Serial.print(F("Discarded char: '"));
-          Serial.print(discarded);
-          Serial.println(F("'"));
-        #endif
-      }
-      #if DEBUG_SERIAL
-        Serial.println(F("Serial buffer flushed due to invalid header"));
-      #endif
-      return;  // Exit to avoid processing more characters
     } else {
-      // After header, collect data until newline
+      // Header is complete, collect data
       inputString += inChar;
+      // Check for end of command
       if (inChar == '\n' || inChar == '\r') {
         inputdata = inputString.substring(HEADER_LENGTH);
         inputdata.trim();
@@ -209,34 +138,28 @@ void serialEvent() {
           Serial.print(inputdata);
           Serial.println(F("'"));
         #endif
-        inputdataComplete = true;
+        // Validate command length
+        if (inputdata.length() > 0 && inputdata.length() <= 50) {
+          inputdataComplete = true;
+        } else {
+          #if DEBUG_SERIAL
+            Serial.println(F("Invalid command length after NORA"));
+          #endif
+        }
         inputString = "";
-        headerIndex = 0;  // Reset for next command
-      } else {
-        #if DEBUG_SERIAL
-          Serial.println(F("Waiting for end of line (\\n or \\r)..."));
-        #endif
+        headerIndex = 0;
+        headerComplete = false; // Reset for next command
       }
     }
 
     // Prevent buffer overflow
-    if (inputString.length() > 100) {
+    if (inputString.length() > 40) {
       #if DEBUG_SERIAL
         Serial.println(F("Input buffer overflow - clearing!"));
       #endif
       inputString = "";
       headerIndex = 0;
-      while (Serial.available()) {
-        char discarded = Serial.read();
-        #if DEBUG_SERIAL
-          Serial.print(F("Discarded char: '"));
-          Serial.print(discarded);
-          Serial.println(F("'"));
-        #endif
-      }
-      #if DEBUG_SERIAL
-        Serial.println(F("Serial buffer flushed due to overflow"));
-      #endif
+      headerComplete = false;
     }
   }
 }
