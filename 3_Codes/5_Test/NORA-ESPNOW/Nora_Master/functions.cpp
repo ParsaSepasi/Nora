@@ -146,7 +146,7 @@ void handleSerialCommand(String command) {
     Serial.print(F("Component: '"));
     Serial.print(component);
     Serial.println(F("'"));
-    if (component == "magicl" || component == "magicb") {
+    if (component == "magicl" || component == "magicbl") {
       ledComponent = component;
       if (partCount >= 3 && parts[1] == "MODE") {
         ledMode = toLowerCaseString(parts[2]);

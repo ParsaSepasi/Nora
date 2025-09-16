@@ -230,7 +230,7 @@
 #include "functions.h"
 
 // ESP-NOW Configuration
-uint8_t slaveMACAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with actual Slave MAC
+uint8_t slaveMACAddress[] = {0x24, 0x0A, 0xC4, 0x00, 0x01, 0x10}; // Replace with actual Slave MAC
 esp_now_peer_info_t peerInfo;
 bool espNowInitialized = false;
 
@@ -259,7 +259,7 @@ bool initESPNow() {
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv);
   memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
-  peerInfo.channel = 0; // Use default channel
+  peerInfo.channel = 1; // Use default channel
   peerInfo.encrypt = false;
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
     Serial.println("Peer Add Fail");
@@ -328,7 +328,7 @@ void loop() {
     String component = (firstUnderscore > 0) ? inputdata.substring(0, firstUnderscore) : "";
     component = toLowerCaseString(component);
 
-    if (component == "clock" || component == "magicb") {
+    if (component == "clock" || component == "magicbl") {
       // Forward to Slave
       if (sendCommandToSlave(inputdata)) {
         Serial.println("Forwarded to Slave");
