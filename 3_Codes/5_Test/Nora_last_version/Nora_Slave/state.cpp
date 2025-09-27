@@ -1,32 +1,22 @@
 #include "pins.h"
 #include "state.h"
 
-CRGB leds[NUM_LEDS];
 CRGB box_leds[NUM_BOX_LEDS];
 
 // LED States
-String ledComponent = "magicbl";  // یکسان‌سازی به magicb
+String ledComponent = "magicbl";
 String ledMode = "off";
-String ledColor = "#FF0000";     // Default red
-int brightnessLevel = 1;         // Default mid
+String ledColor = "#FF0000";
+int brightnessLevel = 1;
 
 String clockTime = "00:00:00";
-
-bool soundBoost = false;
-bool boxOpen = false;
 
 String inputString = "";
 int customBrightness = 100;
 
 bool RainbowActive = false;
-bool EqualizeActive = false;
+//bool EqualizeActive = false;
 bool StaticActive = false;
-bool boxRainbowActive = false;
-bool boxEqualizeActive = false;
-bool boxStaticActive = false;
-
-unsigned long relayOnTime = 0;
-bool relayActive = false;
 
 // EQ1
 CRGBPalette16 currentPalette;
@@ -44,8 +34,8 @@ unsigned long lastCalibrate = 0;
 uint8_t colorIndex = 0;
 
 // پین‌ها
-const int GPIOPins[NUM_PINS] = {BACKLIGHT, READINGLIGHT, PARTY, MUTE, OPEN_BOX, CLOSE_BOX};
-const String GPIONames[NUM_PINS] = {"BACKLIGHT", "READINGLIGHT", "PARTY", "MUTE", "OPEN_BOX", "CLOSE_BOX"};
+// const int GPIOPins[NUM_PINS] = {BACKLIGHT, READINGLIGHT, PARTY, MUTE, OPEN_BOX, CLOSE_BOX};
+// const String GPIONames[NUM_PINS] = {"BACKLIGHT", "READINGLIGHT", "PARTY", "MUTE", "OPEN_BOX", "CLOSE_BOX"};
 
 // متغیرهای پردازش سریال
 bool stringStart = false;
@@ -54,6 +44,3 @@ bool inputdataComplete = false;
 
 // default clock
 String currentTime = "00:00:00";
-
-bool readingLightOn = false;
-bool backLightOn = false;

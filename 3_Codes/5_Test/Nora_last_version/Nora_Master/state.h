@@ -4,8 +4,9 @@
 
 #define DEBUG_SERIAL 1
 
-// LED آرایه
+// LED آرایه‌ها
 extern CRGB leds[NUM_LEDS];
+extern CRGB box_leds[NUM_BOX_LEDS];
 
 extern String inputString;
 extern int customBrightness;
@@ -19,7 +20,8 @@ extern bool boxEqualizeActive;
 extern bool boxStaticActive;
 
 extern String ledComponent;
-extern String ledMode;
+extern String ledMode; // برای magicl (GPIO 21)
+extern String boxLedMode; // برای magicbl (GPIO 22)
 extern String ledColor;
 extern int brightnessLevel;
 

@@ -1,0 +1,5 @@
+Record=TopLevelDocument|FileName=NORA_V0.01.SchDoc|SheetNumber= 
+Record=SheetSymbol|SourceDocument=NORA_V0.01.SchDoc|Designator=Amplifier|SchDesignator=Amplifier|FileName=Amplifier.SchDoc|SheetNumber= |SymbolType=Normal|RawFileName=Amplifier.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=NORA_V0.01.SchDoc|Designator=Bluetooth|SchDesignator=Bluetooth|FileName=Bluetooth.SchDoc|SheetNumber= |SymbolType=Normal|RawFileName=Bluetooth.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=NORA_V0.01.SchDoc|Designator=POWER|SchDesignator=POWER|FileName=POWER.SchDoc|SheetNumber= |SymbolType=Normal|RawFileName=POWER.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=NORA_V0.01.SchDoc|Designator=TouchORkey|SchDesignator=TouchORkey|FileName=TouchORkey.SchDoc|SheetNumber= |SymbolType=Normal|RawFileName=TouchORkey.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 

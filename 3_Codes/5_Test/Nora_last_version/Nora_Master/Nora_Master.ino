@@ -1,8 +1,3 @@
-// Nora_v2.ino - Master ESP32 for Nora Project with ESP-NOW
-// Reads serial input for clock and magicB commands, forwards to Slave via ESP-NOW
-// Fixed for ESP32 Arduino Core 3.3.0 compatibility
-// Integrates ESP-NOW functionality, corrected callback signatures
-
 #include <esp_now.h>
 #include <WiFi.h>
 #include <FastLED.h>
@@ -15,7 +10,7 @@ uint8_t slaveMACAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace wit
 esp_now_peer_info_t peerInfo;
 bool espNowInitialized = false;
 
-// Callback for send status (fixed for 3.3.0)
+// Callback for send status
 void OnDataSent(const wifi_tx_info_t *send_info, esp_now_send_status_t status) {
   Serial.print("Send Status: ");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
@@ -40,7 +35,7 @@ bool initESPNow() {
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv);
   memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
-  peerInfo.channel = 1; // Use default channel
+  peerInfo.channel = 1;
   peerInfo.encrypt = false;
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
     Serial.println("Peer Add Fail");
@@ -77,8 +72,9 @@ void setup() {
   }
   inputString.reserve(100);
 
-  // FastLED Init (local if needed)
+  // FastLED Init
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.addLeds<LED_TYPE, BOX_PIN, COLOR_ORDER>(box_leds, NUM_BOX_LEDS);
   FastLED.setBrightness(customBrightness);
   FastLED.clear();
 
@@ -102,52 +98,59 @@ void setup() {
 }
 
 void loop() {
-  serialEvent();  // Read serial
+  serialEvent();
   if (inputdataComplete) {
-    // Check component
     int firstUnderscore = inputdata.indexOf('_');
     String component = (firstUnderscore > 0) ? inputdata.substring(0, firstUnderscore) : "";
     component = toLowerCaseString(component);
 
+    // همیشه پردازش محلی انجام بده
+    handleSerialCommand(inputdata);
+
+    // اگر clock یا magicbl باشه، به Slave هم بفرست
     if (component == "clock" || component == "magicbl") {
-      // Forward to Slave
       if (sendCommandToSlave(inputdata)) {
-        Serial.println("Forwarded to Slave");
+        Serial.println("Forwarded to Slave and processed locally in Master");
       } else {
         Serial.println("Forward Fail");
       }
-    } else {
-      // Local process
-      handleSerialCommand(inputdata);
     }
     inputdataComplete = false;
   }
 
-  // LED Update (local)
-  if (ledMode != "off") {
-    Serial.print(F("ledMode: "));          // Debug
-    Serial.print(ledMode);                 // Debug
-    Serial.print(F(", RainbowActive: "));  // Debug
-    Serial.println(RainbowActive);         // Debug
+  // LED Update برای magicl (GPIO 21)
+  if (RainbowActive || EqualizeActive || StaticActive) {
+    Serial.print(F("Updating magicl: "));
+    Serial.print(F("ledMode: "));
+    Serial.print(ledMode);
+    Serial.print(F(", RainbowActive: "));
+    Serial.println(RainbowActive);
     if (ledMode == "rainbow" && RainbowActive) {
       runRainbow();
     } else if (ledMode == "equalize" && EqualizeActive) {
       runEqualize();
     } else if (ledMode == "static" && StaticActive) {
       runStatic();
-    } else if (ledMode == "rainbow" && boxRainbowActive) {
+    }
+  }
+
+  // LED Update برای magicbl (GPIO 22)
+  if (boxRainbowActive || boxEqualizeActive || boxStaticActive) {
+    Serial.print(F("Updating magicbl: "));
+    Serial.print(F("boxRainbowActive: "));
+    Serial.println(boxRainbowActive);
+    if (boxRainbowActive) {
       runBOXRainbow();
-    } else if (ledMode == "equalize" && boxEqualizeActive) {
+    } else if (boxEqualizeActive) {
       runBOXEqualize();
-    } else if (ledMode == "static" && boxStaticActive) {
+    } else if (boxStaticActive) {
       runBOXStatic();
     }
-    FastLED.setBrightness(brightnessLevel * 85 + 50);
-    FastLED.show();
-  } else {
-    FastLED.clear();
-    FastLED.show();
   }
+
+  // اعمال تغییرات LED
+  FastLED.setBrightness(brightnessLevel * 85 + 50);
+  FastLED.show();
 
   // Relay Timeout
   if (relayActive && millis() - relayOnTime >= 8000) {
@@ -157,11 +160,11 @@ void loop() {
     Serial.println("Relay Off");
   }
 
-  delay(10); // Main loop delay
+  delay(10);
 }
 
 void serialEvent() {
-  static const char header[] = "NORA_";  // Header (underscore, no space)
+  static const char header[] = "NORA_";
   static const int HEADER_LENGTH = 5;
   static int headerIndex = 0;
   static bool headerComplete = false;
