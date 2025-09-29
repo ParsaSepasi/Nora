@@ -11,7 +11,7 @@
 
 // LED
 #define LED_PIN      2
-#define BOX_PIN      2
+#define BOX_PIN      7
 #define NUM_LEDS     98
 #define NUM_BOX_LEDS 15
 #define LED_TYPE     WS2811

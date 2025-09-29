@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
-#define DEBUG_SERIAL 1  // غیرفعال کردن سریال برای جلوگیری از تداخل
+#define DEBUG_SERIAL 0  // غیرفعال کردن سریال برای جلوگیری از تداخل
 
 // LED آرایه‌ها
 extern CRGB box_leds[NUM_BOX_LEDS];

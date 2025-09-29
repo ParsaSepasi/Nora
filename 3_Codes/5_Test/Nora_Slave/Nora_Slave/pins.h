@@ -21,6 +21,7 @@
 //#define MIC_PIN      32
 
 // MAX7219 (برای نمایشگر ساعت)
-#define MAX7219_Data_IN 0       // پین DIN
-#define MAX7219_Chip_Select 3   // پین CS
-#define MAX7219_Clock 1         // پین CLK
+#define CLK_PIN      1  // پین CLK برای MAX7219
+#define MAX7219_DATA_PIN 0  // پین DIN (renamed to avoid FastLED conflict)
+#define CS_PIN       3  // پین CS
+#define MAX_DEVICES  1   // تعداد ماژول‌های MAX7219
