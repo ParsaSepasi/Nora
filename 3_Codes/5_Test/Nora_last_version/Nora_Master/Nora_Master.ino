@@ -72,7 +72,7 @@ void setup() {
   }
   inputString.reserve(100);
 
-  // FastLED Init
+  //FastLED Init
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.addLeds<LED_TYPE, BOX_PIN, COLOR_ORDER>(box_leds, NUM_BOX_LEDS);
   FastLED.setBrightness(customBrightness);
