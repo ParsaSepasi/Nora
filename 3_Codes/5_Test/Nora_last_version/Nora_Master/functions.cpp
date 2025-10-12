@@ -152,6 +152,7 @@ void handleSerialCommand(String command) {
         RainbowActive = false;
         EqualizeActive = false;
         StaticActive = false;
+        WakeActive = false;
         Serial.println(F("magicl Off in Master (GPIO 21)"));
         fill_solid(leds, NUM_LEDS, CRGB::Black);  // فقط leds خاموش میشه
       } else if (parameter == "rainbow") {
@@ -159,12 +160,14 @@ void handleSerialCommand(String command) {
         RainbowActive = true;
         EqualizeActive = false;
         StaticActive = false;
+        WakeActive = false;
         Serial.println(F("magicl Rainbow On in Master (GPIO 21)"));
       } else if (parameter == "equalize") {
         ledMode = "equalize";
         RainbowActive = false;
         EqualizeActive = true;
         StaticActive = false;
+        WakeActive = false;
         Serial.println(F("magicl Equalize On in Master (GPIO 21)"));
       } else if (parameter == "static") {
         if (partCount >= 4) {
@@ -173,12 +176,24 @@ void handleSerialCommand(String command) {
           RainbowActive = false;
           EqualizeActive = false;
           StaticActive = true;
+          WakeActive = false;
+
           Serial.print(F("magicl Static On in Master (GPIO 21) - Color: "));
           Serial.println(ledColor);
         } else {
           Serial.println(F("Static requires color!"));
         }
-      } else {
+      } else if (parameter == "wakeup") {
+        ledMode = "wakeup";
+        RainbowActive = false;
+        EqualizeActive = false;
+        StaticActive = false;
+        WakeActive = true;
+        Serial.println(F("magicl Wakeup On in Master (GPIO 21)"));
+        run_led_wake_word();  // اجرای انیمیشن wake word
+        WakeActive = false;  // بعد از اجرا، غیرفعال کردن (چون موقتی است)
+        ledMode = "off";  // برگشت به حالت خاموش 
+      }else {
         Serial.println(F("Unknown magicl mode"));
       }
     } else if (action == "brightness") {

@@ -24,6 +24,7 @@ int customBrightness = 100;
 bool RainbowActive = false;
 bool EqualizeActive = false;
 bool StaticActive = false;
+bool WakeActive = false;
 bool boxRainbowActive = false;
 bool boxEqualizeActive = false;
 bool boxStaticActive = false;

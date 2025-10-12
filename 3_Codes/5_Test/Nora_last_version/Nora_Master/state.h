@@ -14,6 +14,7 @@ extern int customBrightness;
 extern bool RainbowActive;
 extern bool EqualizeActive;
 extern bool StaticActive;
+extern bool WakeActive;
 
 extern bool boxRainbowActive;
 extern bool boxEqualizeActive;
