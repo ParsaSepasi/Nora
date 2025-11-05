@@ -462,7 +462,7 @@ bool pulse0=false;
 
 void pulse_option1(){
 
-  if (pulse1==true && millis()-timepulse1>=10000 ){
+  if (pulse1==true && millis()-timepulse1>=15000 ){
     pulse1=false;
     pulse0=true;
     Serial.println("pulse_option1");
