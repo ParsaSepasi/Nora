@@ -411,7 +411,7 @@ void close_box() {
 
 // ------------------- Wake word -------------------
 void run_led_wake_word() {
-  const int sections = 5;
+  const int sections = 4;
   int ledsPerSection = NUM_LEDS / sections;
   CRGB wakeColor = CRGB(0, 255, 255);
   Serial.println(F("Wake word says hello!"));
