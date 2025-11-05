@@ -6,7 +6,7 @@
 #include "functions.h"
 
 // ESP-NOW Configuration
-uint8_t slaveMACAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with actual Slave MAC
+uint8_t slaveMACAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };  // Replace with actual Slave MAC
 esp_now_peer_info_t peerInfo;
 bool espNowInitialized = false;
 
@@ -62,15 +62,17 @@ bool sendCommandToSlave(String cmd) {
 }
 
 void setup() {
+  timepulse1 = millis();
   Serial.begin(115200);
   Serial.println("Nora Master Starting...");
-
   // GPIO Init
   for (int i = 0; i < NUM_PINS; i++) {
     pinMode(GPIOPins[i], OUTPUT);
     digitalWrite(GPIOPins[i], LOW);
   }
-  inputString.reserve(100);
+
+  pinMode(ADKEY, OUTPUT);
+  digitalWrite(ADKEY, LOW);
 
   //FastLED Init
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
@@ -82,7 +84,7 @@ void setup() {
   normal_mode();
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
-  pinMode(READINGLIGHT, OUTPUT);
+  // pinMode(READINGLIGHT, OUTPUT);  // حذف: تکراری با GPIO Init
   digitalWrite(READINGLIGHT, LOW);
   RainbowActive = false;
   EqualizeActive = false;
@@ -94,10 +96,15 @@ void setup() {
 
   // ESP-NOW Init
   espNowInitialized = initESPNow();
+
+  // دیگه systemStartTime = millis(); اینجا نذار!
+
   Serial.println("Master Ready - Send NORA_ commands");
 }
 
 void loop() {
+  pulse_option1();
+  pulse_option0();
   serialEvent();
   if (inputdataComplete) {
     int firstUnderscore = inputdata.indexOf('_');
@@ -118,7 +125,7 @@ void loop() {
     inputdataComplete = false;
   }
 
-  // LED Update برای magicl (GPIO 21)
+  // LED Update برای magicl (GPIO 21)  // فرض کردم بخش truncated همینه
   if (RainbowActive || EqualizeActive || StaticActive) {
     Serial.print(F("Updating magicl: "));
     Serial.print(F("ledMode: "));
@@ -146,11 +153,11 @@ void loop() {
     } else if (boxStaticActive) {
       runBOXStatic();
     }
-  }
 
-  // اعمال تغییرات LED
-  FastLED.setBrightness(brightnessLevel * 85 + 50);
-  FastLED.show();
+    // اعمال تغییرات LED
+    FastLED.setBrightness(brightnessLevel * 85 + 50);
+    FastLED.show();
+  }
 
   // Relay Timeout
   if (relayActive && millis() - relayOnTime >= 8000) {
@@ -159,11 +166,11 @@ void loop() {
     relayActive = false;
     Serial.println("Relay Off");
   }
-
-  delay(10);
+delay(10);
 }
 
 void serialEvent() {
+  // ... (بخش serialEvent بدون تغییر، همون کد قبلی)
   static const char header[] = "NORA_";
   static const int HEADER_LENGTH = 5;
   static int headerIndex = 0;

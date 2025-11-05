@@ -453,14 +453,30 @@ void backLight(bool state) {
   }
 }
 
-// تابع تبدیل CRGB -> 24bit و ارسال به led_strip
-// void sendBoxStripPixels(led_strip_t* box_strip, CRGB *box_leds, int count) {
-//   if (!box_strip) return;
-//   // led_strip_set_pixel expects 24-bit color as GRB or RGB depending lib
-//   for (int i = 0; i < count; ++i) {
-//     uint32_t color = ((uint32_t)box_leds[i].g << 16) | ((uint32_t)box_leds[i].r << 8) | box_leds[i].b;
-//     // تابع ممکن است نامش slightly different: led_strip_set_pixel or led_strip_set_pixel_rgb
-//     box_strip->set_pixel(box_strip, i, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
-//   }
-//   box_strip->refresh(box_strip, 100); // timeout ms — تنظیم کن بر اساس نیاز
-// }
+
+bool pulse1=true;
+unsigned long timepulse1=0;
+
+bool pulse0=false;
+ unsigned long timepulse0=0;
+
+void pulse_option1(){
+
+  if (pulse1==true && millis()-timepulse1>=10000 ){
+    pulse1=false;
+    pulse0=true;
+    Serial.println("pulse_option1");
+    digitalWrite(ADKEY, HIGH);
+    timepulse0=millis();
+
+  }
+}
+void pulse_option0(){
+
+  if (pulse0==true && millis()-timepulse0>=100 ){
+    pulse0=false;
+    Serial.println("pulse_option0");
+    digitalWrite(ADKEY, LOW);
+  }
+}
+

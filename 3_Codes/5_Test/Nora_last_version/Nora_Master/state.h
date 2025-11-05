@@ -21,8 +21,8 @@ extern bool boxEqualizeActive;
 extern bool boxStaticActive;
 
 extern String ledComponent;
-extern String ledMode; // برای magicl (GPIO 21)
-extern String boxLedMode; // برای magicbl (GPIO 22)
+extern String ledMode;
+extern String boxLedMode;
 extern String ledColor;
 extern int brightnessLevel;
 
@@ -32,14 +32,14 @@ extern bool relayActive;
 extern bool soundBoost;
 extern bool boxOpen;
 
-// EQ1
+// Rainbow LED
 extern CRGBPalette16 currentPalette;
 extern TBlendType currentBlending;
 
-// EQ2
+// Static LED
 extern int customR, customG, customB;
 
-// EQ3
+// Equalizer LED
 extern float smoothedLevel;
 extern int dynamicMin;
 extern int dynamicMax;

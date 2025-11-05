@@ -41,4 +41,13 @@ void readingLight(bool state);
 // Back Light
 void backLight(bool state);
 
+void pulse_option1();
+void pulse_option0();
+
+extern bool pulse1;
+extern unsigned long timepulse1;
+
+extern bool pulse0;
+extern unsigned long timepulse0;
+
 #endif

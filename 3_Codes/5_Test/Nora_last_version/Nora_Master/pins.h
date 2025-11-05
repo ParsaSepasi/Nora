@@ -8,6 +8,7 @@
 #define CLOSE_BOX    5
 #define MUTE         3
 #define PARTY        6
+#define ADKEY        21
 
 // LED
 #define LED_PIN      2
