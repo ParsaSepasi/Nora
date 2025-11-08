@@ -41,6 +41,7 @@ void readingLight(bool state);
 // Back Light
 void backLight(bool state);
 
+// pulse DAC mode
 void pulse_option1();
 void pulse_option0();
 
@@ -49,5 +50,8 @@ extern unsigned long timepulse1;
 
 extern bool pulse0;
 extern unsigned long timepulse0;
+
+void setup_audio_adc();
+uint8_t readEnvelope();
 
 #endif

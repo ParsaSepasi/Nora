@@ -148,13 +148,21 @@ void handleSerialCommand(String command) {
 
     if (action == "mode") {
       if (parameter == "off") {
+        // ledMode = "off";
+        // RainbowActive = false;
+        // EqualizeActive = false;
+        // StaticActive = false;
+        // WakeActive = false;
+        // Serial.println(F("magicl Off in Master (GPIO 21)"));
+        // fill_solid(leds, NUM_LEDS, CRGB::Black);  // فقط leds خاموش میشه
         ledMode = "off";
         RainbowActive = false;
         EqualizeActive = false;
         StaticActive = false;
         WakeActive = false;
+        fill_solid(leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();  // ← اضافه کن
         Serial.println(F("magicl Off in Master (GPIO 21)"));
-        fill_solid(leds, NUM_LEDS, CRGB::Black);  // فقط leds خاموش میشه
       } else if (parameter == "rainbow") {
         ledMode = "rainbow";
         RainbowActive = true;
@@ -191,9 +199,9 @@ void handleSerialCommand(String command) {
         WakeActive = true;
         Serial.println(F("magicl Wakeup On in Master (GPIO 21)"));
         run_led_wake_word();  // اجرای انیمیشن wake word
-        WakeActive = false;  // بعد از اجرا، غیرفعال کردن (چون موقتی است)
-        ledMode = "off";  // برگشت به حالت خاموش 
-      }else {
+        WakeActive = false;   // بعد از اجرا، غیرفعال کردن (چون موقتی است)
+        ledMode = "off";      // برگشت به حالت خاموش
+      } else {
         Serial.println(F("Unknown magicl mode"));
       }
     } else if (action == "brightness") {
@@ -218,11 +226,17 @@ void handleSerialCommand(String command) {
 
     if (action == "mode") {
       if (parameter == "off") {
+        // boxRainbowActive = false;
+        // boxEqualizeActive = false;
+        // boxStaticActive = false;
+        // Serial.println(F("magicbl Off in Master (GPIO 22)"));
+        // fill_solid(box_leds, NUM_BOX_LEDS, CRGB::Black);  // فقط box_leds خاموش میشه
         boxRainbowActive = false;
         boxEqualizeActive = false;
         boxStaticActive = false;
+        fill_solid(box_leds, NUM_BOX_LEDS, CRGB::Black);
+        FastLED.show();  // ← اضافه کن
         Serial.println(F("magicbl Off in Master (GPIO 22)"));
-        fill_solid(box_leds, NUM_BOX_LEDS, CRGB::Black);  // فقط box_leds خاموش میشه
       } else if (parameter == "rainbow") {
         boxRainbowActive = true;
         boxEqualizeActive = false;
@@ -235,7 +249,7 @@ void handleSerialCommand(String command) {
         Serial.println(F("magicbl Equalize On in Master (GPIO 22)"));
       } else if (parameter == "static") {
         if (partCount >= 4) {
-          ledColor = parts[3];
+          boxledColor = parts[3];
           boxRainbowActive = false;
           boxEqualizeActive = false;
           boxStaticActive = true;
@@ -329,7 +343,7 @@ void handleSerialCommand(String command) {
 
 // ------------------- Equalizer Functions -------------------
 void runRainbow() {
-  Serial.println(F("Running Rainbow (GPIO 21)"));
+  //Serial.println(F("Running Rainbow (GPIO 21)"));
   static uint8_t startIndex = 0;
   startIndex = startIndex + 1;
   for (int i = 0; i < NUM_LEDS; i++) {
@@ -337,28 +351,37 @@ void runRainbow() {
   }
 }
 
+// void runEqualize() {
+//   //Serial.println(F("Running Equalize (GPIO 21)"));
+//   int micValue = analogRead(MIC_PIN);
+//   uint8_t brightness = map(micValue, 0, 4095, 0, 255);
+//   fill_solid(leds, NUM_LEDS, CRGB(brightness, 0, 0));
+// }
+
 void runEqualize() {
-  Serial.println(F("Running Equalize (GPIO 21)"));
-  int micValue = analogRead(MIC_PIN);
-  uint8_t brightness = map(micValue, 0, 4095, 0, 255);
-  fill_solid(leds, NUM_LEDS, CRGB(brightness, 0, 0));
+  uint8_t level = readEnvelope();
+  // می‌خواهیم با Brightness کلی هم هماهنگ شود:
+  uint8_t br = brightnessLevel * 85 + 50;          // 0..2 → ~50..220
+  uint8_t val = (uint8_t)((uint16_t)level * br / 255);
+  fill_solid(leds, NUM_LEDS, CRGB(val, 0, 0));
 }
 
+
 void runStatic() {
-  Serial.println(F("Running Static (GPIO 21)"));
+  //Serial.println(F("Running Static (GPIO 21)"));
   CRGB color = hexToCRGB(ledColor);
   fill_solid(leds, NUM_LEDS, color);
 }
 
 void runBOXRainbow() {
-  Serial.println(F("Running BOX Rainbow (GPIO 22)"));
+  //Serial.println(F("Running BOX Rainbow (GPIO 22)"));
   static uint8_t hue = 0;
   fill_rainbow(box_leds, NUM_BOX_LEDS, hue, 7);
   hue += 2;
 }
 
 void runBOXEqualize() {
-  Serial.println(F("Running BOX Equalize (GPIO 22)"));
+  //Serial.println(F("Running BOX Equalize (GPIO 22)"));
   int raw = analogRead(MIC_PIN);
   smoothedLevel = (0.05 * raw) + (0.95 * smoothedLevel);
   uint8_t brightness = map(smoothedLevel, 0, 4095, 0, 255);
@@ -370,8 +393,8 @@ void runBOXEqualize() {
 }
 
 void runBOXStatic() {
-  Serial.println(F("Running BOX Static (GPIO 22)"));
-  CRGB color = hexToCRGB(ledColor);
+  //Serial.println(F("Running BOX Static (GPIO 22)"));
+  CRGB color = hexToCRGB(boxledColor);
   fill_solid(box_leds, NUM_BOX_LEDS, color);
 }
 
@@ -454,29 +477,67 @@ void backLight(bool state) {
 }
 
 
-bool pulse1=true;
-unsigned long timepulse1=0;
+bool pulse1 = true;
+unsigned long timepulse1 = 0;
 
-bool pulse0=false;
- unsigned long timepulse0=0;
+bool pulse0 = false;
+unsigned long timepulse0 = 0;
 
-void pulse_option1(){
+void pulse_option1() {
 
-  if (pulse1==true && millis()-timepulse1>=15000 ){
-    pulse1=false;
-    pulse0=true;
+  if (pulse1 == true && millis() - timepulse1 >= 20000) {
+    pulse1 = false;
+    pulse0 = true;
     Serial.println("pulse_option1");
     digitalWrite(ADKEY, HIGH);
-    timepulse0=millis();
-
+    timepulse0 = millis();
   }
 }
-void pulse_option0(){
+void pulse_option0() {
 
-  if (pulse0==true && millis()-timepulse0>=100 ){
-    pulse0=false;
+  if (pulse0 == true && millis() - timepulse0 >= 100) {
+    pulse0 = false;
     Serial.println("pulse_option0");
     digitalWrite(ADKEY, LOW);
   }
 }
 
+// --------- Audio ADC config + Envelope ---------
+#ifndef ADC_ATTEN_DB_11
+  #define ADC_ATTEN_DB_11 ADC_11db
+#endif
+
+static const float ENV_ALPHA = 0.15f;   // فیلتر نمایی برای هموارسازی
+static const float DC_ALPHA  = 0.01f;   // فیلتر آهسته برای بایاس (خط DC)
+static float envSmooth = 0.0f;
+static float dcSlow    = 2048.0f;       // اگر سیگنال حول ~1.65V بایاس شده باشد
+
+void setup_audio_adc() {
+  analogReadResolution(12);                        // 0..4095
+  analogSetPinAttenuation(MIC_PIN, ADC_ATTEN_DB_11); // رنج نزدیک 3.3V
+  // Warm-up
+  for (int i = 0; i < 8; ++i) (void)analogRead(MIC_PIN);
+}
+
+uint8_t readEnvelope() {
+  // چند نمونه برای کاهش نویز
+  const int N = 16;
+  int sum = 0;
+  for (int i = 0; i < N; ++i) sum += analogRead(MIC_PIN);
+  int sample = sum / N;
+
+  // دنبال‌کردن بایاس (DC) آهسته
+  dcSlow = (1.0f - DC_ALPHA) * dcSlow + DC_ALPHA * sample;
+
+  // قدرمطلق نسبت به بایاس = اِنولوپ خام
+  int env = abs(sample - (int)dcSlow);
+
+  // هموارسازی سریع‌تر روی اِنولوپ
+  envSmooth = (1.0f - ENV_ALPHA) * envSmooth + ENV_ALPHA * (float)env;
+
+  // آستانه و مپ به 0..255 (این اعداد را بعداً با دیدن لاگ/تجربه تنظیم کن)
+  const int ENV_MIN = 2;     // حداقل حساسیت
+  const int ENV_MAX = 800;   // سقف (بسته به سیگنال قابل تنظیم)
+  int clamped = constrain((int)envSmooth, ENV_MIN, ENV_MAX);
+  return (uint8_t)map(clamped, ENV_MIN, ENV_MAX, 0, 255);
+}

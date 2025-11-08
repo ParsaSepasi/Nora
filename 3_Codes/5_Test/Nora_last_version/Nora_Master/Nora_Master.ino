@@ -74,6 +74,8 @@ void setup() {
   pinMode(ADKEY, OUTPUT);
   digitalWrite(ADKEY, LOW);
 
+  setup_audio_adc();
+
   //FastLED Init
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.addLeds<LED_TYPE, BOX_PIN, COLOR_ORDER>(box_leds, NUM_BOX_LEDS);

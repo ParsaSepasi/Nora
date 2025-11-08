@@ -24,6 +24,7 @@ extern String ledComponent;
 extern String ledMode;
 extern String boxLedMode;
 extern String ledColor;
+extern String boxledColor;
 extern int brightnessLevel;
 
 // Relay
