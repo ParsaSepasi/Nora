@@ -33,7 +33,10 @@ void open_box();
 void close_box();
 
 // Wake word
-void run_led_wake_word();
+//void run_led_wake_word();
+void wake_start(uint8_t sections = 4, uint16_t stepMs = 1000);
+void wake_update(uint16_t stepMs = 1000);
+void wake_abort();
 
 // Reading Light
 void readingLight(bool state);

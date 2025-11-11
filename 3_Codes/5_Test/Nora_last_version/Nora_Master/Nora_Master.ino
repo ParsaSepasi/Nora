@@ -108,6 +108,7 @@ void loop() {
   pulse_option1();
   pulse_option0();
   serialEvent();
+  wake_update(1000);  // باید با همان stepMs که در wake_start گذاشتی هماهنگ باشد
   if (inputdataComplete) {
     int firstUnderscore = inputdata.indexOf('_');
     String component = (firstUnderscore > 0) ? inputdata.substring(0, firstUnderscore) : "";
@@ -168,7 +169,7 @@ void loop() {
     relayActive = false;
     Serial.println("Relay Off");
   }
-delay(10);
+  delay(10);
 }
 
 void serialEvent() {

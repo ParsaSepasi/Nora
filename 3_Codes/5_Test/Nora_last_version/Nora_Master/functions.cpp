@@ -10,6 +10,56 @@
 #define DEBUG_PRINT(x)
 #define DEBUG_PRINTLN(x)
 #endif
+// -------- Non-blocking wake using millis (single function) --------
+#include <FastLED.h>
+
+extern CRGB leds[];  // از قبل تعریف شده
+enum WakeCmd : uint8_t { WAKE_NOP = 0,
+                         WAKE_START = 1,
+                         WAKE_ABORT = 2 };
+
+void run_led_wake_word(WakeCmd cmd = WAKE_NOP, uint8_t sections = 4, uint16_t stepMs = 1000) {
+  // state داخلیِ تابع
+  static bool active = false;
+  static uint8_t stage = 0;  // 0: fill, 1..sections: خاموش‌کردن هر بخش
+  static uint8_t S = 4;
+  static uint16_t step = 1000;
+  static int per = 0;
+  static uint32_t nextMs = 0;
+  const CRGB wakeColor = CRGB(0, 255, 255);
+
+  // فرمان‌ها
+  if (cmd == WAKE_ABORT) {
+    active = false;
+    return;
+  }
+  if (cmd == WAKE_START) {
+    S = sections;
+    step = stepMs;
+    per = (NUM_LEDS + S - 1) / S;  // ceil تقسیم
+    stage = 0;
+    active = true;
+    fill_solid(leds, NUM_LEDS, wakeColor);
+    FastLED.show();
+    nextMs = millis() + step;
+    return;  // بقیه‌اش در پاس‌های بعدی loop جلو می‌رود
+  }
+
+  // جلو بردن انیمیشن بدون delay
+  if (!active) return;
+  if (millis() < nextMs) return;
+
+  if (stage < S) {
+    int start = stage * per;
+    int end = min(NUM_LEDS, start + per);
+    for (int i = start; i < end; ++i) leds[i] = CRGB::Black;
+    FastLED.show();
+    stage++;
+    nextMs = millis() + step;
+  } else {
+    active = false;  // تمام شد
+  }
+}
 
 // CRC-8 function
 uint8_t crc8(const uint8_t *data, uint8_t len) {
@@ -198,9 +248,7 @@ void handleSerialCommand(String command) {
         StaticActive = false;
         WakeActive = true;
         Serial.println(F("magicl Wakeup On in Master (GPIO 21)"));
-        run_led_wake_word();  // اجرای انیمیشن wake word
-        WakeActive = false;   // بعد از اجرا، غیرفعال کردن (چون موقتی است)
-        ledMode = "off";      // برگشت به حالت خاموش
+        wake_start(4, 1000);  // ← non-blocking: 4 بخش، هر 1s
       } else {
         Serial.println(F("Unknown magicl mode"));
       }
@@ -361,7 +409,7 @@ void runRainbow() {
 void runEqualize() {
   uint8_t level = readEnvelope();
   // می‌خواهیم با Brightness کلی هم هماهنگ شود:
-  uint8_t br = brightnessLevel * 85 + 50;          // 0..2 → ~50..220
+  uint8_t br = brightnessLevel * 85 + 50;  // 0..2 → ~50..220
   uint8_t val = (uint8_t)((uint16_t)level * br / 255);
   fill_solid(leds, NUM_LEDS, CRGB(val, 0, 0));
 }
@@ -433,23 +481,23 @@ void close_box() {
 }
 
 // ------------------- Wake word -------------------
-void run_led_wake_word() {
-  const int sections = 4;
-  int ledsPerSection = NUM_LEDS / sections;
-  CRGB wakeColor = CRGB(0, 255, 255);
-  Serial.println(F("Wake word says hello!"));
-  fill_solid(leds, NUM_LEDS, wakeColor);
-  FastLED.show();
-  for (int sec = 0; sec < sections; sec++) {
-    delay(1000);
-    int start = sec * ledsPerSection;
-    int end = (sec == sections - 1) ? NUM_LEDS : start + ledsPerSection;
-    for (int i = start; i < end; i++) {
-      leds[i] = CRGB::Black;
-    }
-    FastLED.show();
-  }
-}
+// void run_led_wake_word() {
+//   const int sections = 4;
+//   int ledsPerSection = NUM_LEDS / sections;
+//   CRGB wakeColor = CRGB(0, 255, 255);
+//   Serial.println(F("Wake word says hello!"));
+//   fill_solid(leds, NUM_LEDS, wakeColor);
+//   FastLED.show();
+//   for (int sec = 0; sec < sections; sec++) {
+//     delay(1000);
+//     int start = sec * ledsPerSection;
+//     int end = (sec == sections - 1) ? NUM_LEDS : start + ledsPerSection;
+//     for (int i = start; i < end; i++) {
+//       leds[i] = CRGB::Black;
+//     }
+//     FastLED.show();
+//   }
+// }
 
 // TODO: Implement parseRGBCommand if needed
 void parseRGBCommand(String rgbString) {
@@ -504,17 +552,17 @@ void pulse_option0() {
 
 // --------- Audio ADC config + Envelope ---------
 #ifndef ADC_ATTEN_DB_11
-  #define ADC_ATTEN_DB_11 ADC_11db
+#define ADC_ATTEN_DB_11 ADC_11db
 #endif
 
-static const float ENV_ALPHA = 0.15f;   // فیلتر نمایی برای هموارسازی
-static const float DC_ALPHA  = 0.01f;   // فیلتر آهسته برای بایاس (خط DC)
+static const float ENV_ALPHA = 0.15f;  // فیلتر نمایی برای هموارسازی
+static const float DC_ALPHA = 0.01f;   // فیلتر آهسته برای بایاس (خط DC)
 static float envSmooth = 0.0f;
-static float dcSlow    = 2048.0f;       // اگر سیگنال حول ~1.65V بایاس شده باشد
+static float dcSlow = 2048.0f;  // اگر سیگنال حول ~1.65V بایاس شده باشد
 
 void setup_audio_adc() {
-  analogReadResolution(12);                        // 0..4095
-  analogSetPinAttenuation(MIC_PIN, ADC_ATTEN_DB_11); // رنج نزدیک 3.3V
+  analogReadResolution(12);                           // 0..4095
+  analogSetPinAttenuation(MIC_PIN, ADC_ATTEN_DB_11);  // رنج نزدیک 3.3V
   // Warm-up
   for (int i = 0; i < 8; ++i) (void)analogRead(MIC_PIN);
 }
@@ -536,8 +584,8 @@ uint8_t readEnvelope() {
   envSmooth = (1.0f - ENV_ALPHA) * envSmooth + ENV_ALPHA * (float)env;
 
   // آستانه و مپ به 0..255 (این اعداد را بعداً با دیدن لاگ/تجربه تنظیم کن)
-  const int ENV_MIN = 2;     // حداقل حساسیت
-  const int ENV_MAX = 800;   // سقف (بسته به سیگنال قابل تنظیم)
+  const int ENV_MIN = 2;    // حداقل حساسیت
+  const int ENV_MAX = 800;  // سقف (بسته به سیگنال قابل تنظیم)
   int clamped = constrain((int)envSmooth, ENV_MIN, ENV_MAX);
   return (uint8_t)map(clamped, ENV_MIN, ENV_MAX, 0, 255);
 }
