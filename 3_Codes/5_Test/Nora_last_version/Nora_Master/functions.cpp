@@ -10,8 +10,7 @@
 #define DEBUG_PRINT(x)
 #define DEBUG_PRINTLN(x)
 #endif
-// -------- Non-blocking wake using millis (single function) --------
-#include <FastLED.h>
+
 
 extern CRGB leds[];  // از قبل تعریف شده
 enum WakeCmd : uint8_t { WAKE_NOP = 0,
@@ -588,4 +587,17 @@ uint8_t readEnvelope() {
   const int ENV_MAX = 800;  // سقف (بسته به سیگنال قابل تنظیم)
   int clamped = constrain((int)envSmooth, ENV_MIN, ENV_MAX);
   return (uint8_t)map(clamped, ENV_MIN, ENV_MAX, 0, 255);
+}
+
+void wake_start(uint8_t sections, uint16_t stepMs) {
+  run_led_wake_word(WAKE_START, sections, stepMs);
+}
+
+void wake_update(uint16_t /*stepMs*/) {
+  // non-blocking tick; stepMs نیازی نیست، زمان‌بندی داخل تابع نگه‌داری می‌شود
+  run_led_wake_word(WAKE_NOP);
+}
+
+void wake_abort() {
+  run_led_wake_word(WAKE_ABORT);
 }
