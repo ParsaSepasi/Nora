@@ -44,3 +44,5 @@ bool inputdataComplete = false;
 
 // default clock
 String currentTime = "00:00:00";
+
+RTC_DS1307 rtc;   // تعریف واقعی

@@ -2,6 +2,9 @@
 #include "pins.h"
 #include "state.h"
 #include "functions.h"
+#include <RTClib.h>
+#include <Wire.h>
+
 
 #if DEBUG_SERIAL
 #define DEBUG_PRINT(x) Serial.print(x)
@@ -165,22 +168,26 @@ void handleSerialCommand(String command) {
     } else {
       //Serial.println(F("Unknown magicbl action"));
     }
-  } 
+  }
   // Handle clock commands
   else if (component == "clock") {
     if (action == "set") {
       if (partCount >= 3) {
-        clockTime = parts[2]; // xx:xx:xx
-        //Serial.print(F("Clock set to: "));
-        //Serial.println(clockTime);
-      } else {
-        Serial.println(F("Clock set requires time!"));
+        clockTime = parts[2];  // xx:xx:xx
+
+        // Parse "HH:MM:SS"
+        int hh = clockTime.substring(0, 2).toInt();
+        int mm = clockTime.substring(3, 5).toInt();
+        int ss = clockTime.substring(6, 8).toInt();
+
+        // گرفتن تاریخ فعلی برای حفظ Year/Month/Day
+        DateTime now = rtc.now();
+        rtc.adjust(DateTime(now.year(), now.month(), now.day(), hh, mm, ss));
+
+        Serial.print("RTC Updated => ");
+        Serial.println(clockTime);
       }
-    } else {
-      //Serial.println(F("Unknown clock action"));
     }
-  } else {
-    //Serial.println(F("Unknown component"));
   }
 }
 

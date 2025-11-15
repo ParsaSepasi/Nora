@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <FastLED.h>
+#include <RTClib.h>
+
 
 #define DEBUG_SERIAL 1  // غیرفعال کردن سریال برای جلوگیری از تداخل
 
@@ -42,3 +44,4 @@ extern bool inputdataComplete;
 // clock
 extern String currentTime;
 extern String clockTime;
+extern RTC_DS1307 rtc;
