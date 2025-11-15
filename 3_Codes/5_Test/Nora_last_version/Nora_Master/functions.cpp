@@ -407,10 +407,25 @@ void runRainbow() {
 
 void runEqualize() {
   uint8_t level = readEnvelope();
-  // می‌خواهیم با Brightness کلی هم هماهنگ شود:
-  uint8_t br = brightnessLevel * 85 + 50;  // 0..2 → ~50..220
-  uint8_t val = (uint8_t)((uint16_t)level * br / 255);
-  fill_solid(leds, NUM_LEDS, CRGB(val, 0, 0));
+
+  uint8_t numLedsOn = map(level, 30, 180, 0, NUM_LEDS);
+  numLedsOn = constrain(numLedsOn, 0, NUM_LEDS);
+
+  static uint8_t smoothLeds = 0;
+  smoothLeds = (smoothLeds * 2 + numLedsOn) / 3;
+
+  uint8_t hue = map(smoothLeds, 0, NUM_LEDS, 0, 170);
+
+  for (int i = 0; i < NUM_LEDS; i++) {
+    if (i < smoothLeds) {
+      leds[i] = CHSV(hue, 255, 255);  // درست
+    } else {
+      leds[i] = CRGB::Black;
+    }
+  }
+
+  FastLED.setBrightness(brightnessLevel * 85 + 50);
+  FastLED.show();
 }
 
 
@@ -567,24 +582,18 @@ void setup_audio_adc() {
 }
 
 uint8_t readEnvelope() {
-  // چند نمونه برای کاهش نویز
   const int N = 16;
   int sum = 0;
   for (int i = 0; i < N; ++i) sum += analogRead(MIC_PIN);
   int sample = sum / N;
 
-  // دنبال‌کردن بایاس (DC) آهسته
   dcSlow = (1.0f - DC_ALPHA) * dcSlow + DC_ALPHA * sample;
-
-  // قدرمطلق نسبت به بایاس = اِنولوپ خام
   int env = abs(sample - (int)dcSlow);
-
-  // هموارسازی سریع‌تر روی اِنولوپ
   envSmooth = (1.0f - ENV_ALPHA) * envSmooth + ENV_ALPHA * (float)env;
 
-  // آستانه و مپ به 0..255 (این اعداد را بعداً با دیدن لاگ/تجربه تنظیم کن)
-  const int ENV_MIN = 2;    // حداقل حساسیت
-  const int ENV_MAX = 800;  // سقف (بسته به سیگنال قابل تنظیم)
+  const int ENV_MIN = 1;
+  const int ENV_MAX = 300;  // ← تنظیم کن (250~350)
+
   int clamped = constrain((int)envSmooth, ENV_MIN, ENV_MAX);
   return (uint8_t)map(clamped, ENV_MIN, ENV_MAX, 0, 255);
 }

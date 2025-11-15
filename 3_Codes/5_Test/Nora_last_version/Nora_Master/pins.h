@@ -11,7 +11,7 @@
 #define ADKEY        21
 
 // LED
-#define LED_PIN      2
+#define LED_PIN      9
 #define BOX_PIN      7
 #define NUM_LEDS     51
 #define NUM_BOX_LEDS 15
@@ -19,4 +19,4 @@
 #define COLOR_ORDER  RBG
 
 // میکروفون (EQ3)
-#define MIC_PIN      8
+#define MIC_PIN      2
