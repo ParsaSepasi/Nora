@@ -1,0 +1,19 @@
+
+/*
+nora_box_open
+nora_box_close
+nora_magicl_mode_rainbow
+nora_magicbl_mode_rainbow
+nora_magicl_mode_equalizer
+nora_magicbl_mode_equalizer
+nora_magicl_mode_static_#ff0000 قرمز
+nora_magicbl_mode_static_#ff0000
+nora_readingl_on
+nora_readingl_off
+nora_backl_on
+nora_backl_off
+
+
+
+
+*/
