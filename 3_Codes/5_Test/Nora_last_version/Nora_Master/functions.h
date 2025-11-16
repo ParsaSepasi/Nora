@@ -20,7 +20,7 @@ void runRainbow();
 void runEqualize();
 void runStatic();
 void runBOXRainbow();
-void runBOXEqualize();
+//void runBOXEqualize();
 void runBOXStatic();
 
 // Modes

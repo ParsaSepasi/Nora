@@ -86,7 +86,6 @@ void setup() {
   normal_mode();
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
-  // pinMode(READINGLIGHT, OUTPUT);  // حذف: تکراری با GPIO Init
   digitalWrite(READINGLIGHT, LOW);
   RainbowActive = false;
   EqualizeActive = false;
@@ -99,8 +98,6 @@ void setup() {
   // ESP-NOW Init
   espNowInitialized = initESPNow();
 
-  // دیگه systemStartTime = millis(); اینجا نذار!
-
   Serial.println("Master Ready - Send NORA_ commands");
 }
 
@@ -108,7 +105,7 @@ void loop() {
   pulse_option1();
   pulse_option0();
   serialEvent();
-  wake_update(1000);  // باید با همان stepMs که در wake_start گذاشتی هماهنگ باشد
+  wake_update(1000);
   if (inputdataComplete) {
     int firstUnderscore = inputdata.indexOf('_');
     String component = (firstUnderscore > 0) ? inputdata.substring(0, firstUnderscore) : "";
@@ -128,7 +125,6 @@ void loop() {
     inputdataComplete = false;
   }
 
-  // LED Update برای magicl (GPIO 21)  // فرض کردم بخش truncated همینه
   if (RainbowActive || EqualizeActive || StaticActive) {
     Serial.print(F("Updating magicl: "));
     Serial.print(F("ledMode: "));
@@ -142,18 +138,16 @@ void loop() {
     } else if (ledMode == "static" && StaticActive) {
       runStatic();
     }
+    FastLED.show();
   }
 
-  // LED Update برای magicbl (GPIO 22)
-  if (boxRainbowActive || boxEqualizeActive || boxStaticActive) {
+  if (boxRainbowActive || boxStaticActive) {
     Serial.print(F("Updating magicbl: "));
     Serial.print(F("boxRainbowActive: "));
     Serial.println(boxRainbowActive);
     if (boxRainbowActive) {
       runBOXRainbow();
-    } else if (boxEqualizeActive) {
-      runBOXEqualize();
-    } else if (boxStaticActive) {
+    }else if (boxStaticActive) {
       runBOXStatic();
     }
 

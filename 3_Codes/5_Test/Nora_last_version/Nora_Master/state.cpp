@@ -7,11 +7,12 @@ CRGB box_leds[NUM_BOX_LEDS];
 ///////////////
 // LED States
 String ledComponent = "magicl";  // Default
-String ledMode = "off";         // برای magicl (GPIO 21)
-String boxLedMode = "off";      // برای magicbl (GPIO 22)
+String ledMode = "off";         // برای magicl
+String boxLedMode = "off";      // برای magicbl
 String ledColor = "#FF0000";    // Default red
 String boxledColor = "#ff0000";   //Default Red
 int brightnessLevel = 1;        // Default mid
+int boxBrightnessLevel = 1;     // Default mid
 
 String clockTime = "00:00:00";
 
